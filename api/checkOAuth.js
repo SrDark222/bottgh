@@ -1,27 +1,20 @@
-import fetch from 'node-fetch';
-
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Só POST' });
+  const { user_id, oauth_token } = req.query;
 
-  const { user_id } = req.query;
-  const { oauth_token } = req.body;
-
-  if (!user_id) return res.status(400).json({ error: 'user_id obrigatório' });
-  if (!oauth_token) return res.status(400).json({ error: 'oauth_token obrigatório' });
+  if (!user_id || !oauth_token) return res.send('0');
 
   try {
-    const response = await fetch('https://discord.com/api/users/@me', {
+    const r = await fetch('https://discord.com/api/users/@me', {
       headers: { Authorization: `Bearer ${oauth_token}` }
     });
 
-    if (response.status !== 200) return res.status(401).json({ status: 2, message: 'Token inválido' });
+    if (!r.ok) return res.send('0');
 
-    const userData = await response.json();
+    const user = await r.json();
+    if (user.id !== user_id) return res.send('0');
 
-    if (userData.id !== user_id) return res.status(403).json({ status: 2, message: 'user_id não confere' });
-
-    return res.status(200).json({ status: 1 });
+    return res.send('1');
   } catch {
-    return res.status(500).json({ status: 2, message: 'Erro no servidor' });
+    return res.send('0');
   }
 }
